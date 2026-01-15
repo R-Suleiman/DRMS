@@ -1,1 +1,15 @@
 @import "tailwindcss";
+
+.mantine-datatable thead th {
+    background-color: #111a31;
+    color: white;
+    font-weight: 600;
+  }
+
+  .mantine-datatable-table tbody tr {
+    @apply bg-transparent;
+  }
+
+.mantine-datatable-table tbody tr:hover {
+  @apply bg-[#84879e] text-white;
+}
