@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
     Search,
     FileText,
@@ -14,27 +14,20 @@ import { useAuth } from "../../context/AuthProvider";
 import { ActionIcon, TextInput } from "@mantine/core";
 import { DataTable } from "mantine-datatable";
 import { useDebouncedValue } from "@mantine/hooks";
-import { Link } from "react-router-dom";
-
-const mockRecords = [
-    {
-        id: 1,
-        person: "John Doe",
-        type: "Birth Certificate",
-        uploadedAt: "2026-01-10",
-    },
-    {
-        id: 2,
-        person: "Jane Smith",
-        type: "National ID",
-        uploadedAt: "2026-01-12",
-    },
-];
+import { Link, useNavigate } from "react-router-dom";
+import { showTopErrorAlert } from "../../utils/sweetAlert";
+import axiosClient from "../../assets/js/axios-client";
+import Loading from '../../components/Loading'
+import RecordForm from "./RecordForm";
+import { useModal } from "../../context/ModalContext";
 
 export default function Records() {
     const { user } = useAuth();
+    const { openModal } = useModal();
+    const navigate = useNavigate()
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
+    const [records, setRecords] = useState([]);
     const [totalRecords, setTotalRecords] = useState(0);
     const PAGE_SIZES = [5, 10, 20, 30, 50, 100];
     const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
@@ -67,8 +60,43 @@ export default function Records() {
         setPageSize(newPageSize);
         setPage(1);
 
-        getJobs(1, newPageSize, debouncedQuery, sortStatus);
+        getRecords(1, newPageSize, debouncedQuery, sortStatus);
     };
+
+    const getRecords = useCallback(
+        async (page, perPage, search, sort) => {
+            try {
+                setLoading(true);
+                const response = await axiosClient.get("/records", {
+                    params: {
+                        page,
+                        per_page: perPage,
+                        search,
+                        sort_by: sort.columnAccessor,
+                        sort_order: sort.direction,
+                        ...debouncedcolumnFilters,
+                    },
+                    timeout: 30000,
+                })
+                setRecords(response.data.records.data);
+                setTotalRecords(response.data.records.total);
+            } catch (err) {
+                console.log(err);
+                showTopErrorAlert(err);
+            } finally {
+                setLoading(false);
+            }
+        },
+        [debouncedcolumnFilters]
+    );
+
+    useEffect(() => {
+        getRecords(page, pageSize, debouncedQuery, sortStatus);
+    }, [page, pageSize, debouncedQuery, sortStatus, debouncedcolumnFilters]);
+
+    const navigateTo = (route) => {
+        navigate(route)
+    }
 
     const cols = [
         {
@@ -82,9 +110,9 @@ export default function Records() {
             render: (row, index) => (page - 1) * pageSize + index + 1,
         },
         {
-            key: "person",
-            accessor: "person",
-            title: "Person",
+            key: "first_name",
+            accessor: "first_name",
+            title: "First Name",
             sortable: true,
             style: {
                 whiteSpace: "normal",
@@ -93,7 +121,7 @@ export default function Records() {
             },
             filter: (
                 <TextInput
-                    label="person name"
+                    label="first name"
                     placeholder="Search item..."
                     leftSection={<FileSearch size={16} />}
                     rightSection={
@@ -104,25 +132,25 @@ export default function Records() {
                             onClick={() =>
                                 setColumnFilters((prevFilters) => ({
                                     ...prevFilters,
-                                    person: "",
+                                    first_name: "",
                                 }))
                             }
                         >
                             <X size={14} />
                         </ActionIcon>
                     }
-                    value={columnFilters["person"] || ""}
+                    value={columnFilters["first_name"] || ""}
                     onChange={(e) =>
-                        handleColumnSearchChange("person", e.target.value)
+                        handleColumnSearchChange("first_name", e.target.value)
                     }
                 />
             ),
-            filtering: !!columnFilters["person"],
+            filtering: !!columnFilters["first_name"],
         },
         {
-            key: "type",
-            accessor: "type",
-            title: "Type",
+            key: "middle_name",
+            accessor: "middle_name",
+            title: "Middle Name",
             sortable: true,
             style: {
                 whiteSpace: "normal",
@@ -131,8 +159,7 @@ export default function Records() {
             },
             filter: (
                 <TextInput
-                    label="Type"
-                    description="Show Type whose type include the specified text"
+                    label="middle name"
                     placeholder="Search item..."
                     leftSection={<FileSearch size={16} />}
                     rightSection={
@@ -143,25 +170,25 @@ export default function Records() {
                             onClick={() =>
                                 setColumnFilters((prevFilters) => ({
                                     ...prevFilters,
-                                    type: "",
+                                    middle_name: "",
                                 }))
                             }
                         >
                             <X size={14} />
                         </ActionIcon>
                     }
-                    value={columnFilters["type"] || ""}
+                    value={columnFilters["middle_name"] || ""}
                     onChange={(e) =>
-                        handleColumnSearchChange("type", e.target.value)
+                        handleColumnSearchChange("middle_name", e.target.value)
                     }
                 />
             ),
-            filtering: !!columnFilters["type"],
+            filtering: !!columnFilters["middle_name"],
         },
         {
-            key: "uploadedAt",
-            accessor: "uploadedAt",
-            title: "UploadedAt",
+            key: "last_name",
+            accessor: "last_name",
+            title: "Last Name",
             sortable: true,
             style: {
                 whiteSpace: "normal",
@@ -170,7 +197,7 @@ export default function Records() {
             },
             filter: (
                 <TextInput
-                    label="UploadedAt"
+                    label="last name"
                     placeholder="Search item..."
                     leftSection={<FileSearch size={16} />}
                     rightSection={
@@ -181,22 +208,97 @@ export default function Records() {
                             onClick={() =>
                                 setColumnFilters((prevFilters) => ({
                                     ...prevFilters,
-                                    uploadedAt: "",
+                                    last_name: "",
                                 }))
                             }
                         >
                             <X size={14} />
                         </ActionIcon>
                     }
-                    value={columnFilters["uploadedAt"] || ""}
+                    value={columnFilters["last_name"] || ""}
                     onChange={(e) =>
-                        handleColumnSearchChange("uploadedAt", e.target.value)
+                        handleColumnSearchChange("last_name", e.target.value)
                     }
                 />
             ),
-            filtering: !!columnFilters["uploadedAt"],
+            filtering: !!columnFilters["last_name"],
         },
-
+        {
+            key: "email",
+            accessor: "email",
+            title: "Email",
+            sortable: true,
+            style: {
+                whiteSpace: "normal",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+            },
+            filter: (
+                <TextInput
+                    label="Email"
+                    placeholder="Search item..."
+                    leftSection={<FileSearch size={16} />}
+                    rightSection={
+                        <ActionIcon
+                            size="sm"
+                            variant="transparent"
+                            c="dimmed"
+                            onClick={() =>
+                                setColumnFilters((prevFilters) => ({
+                                    ...prevFilters,
+                                    email: "",
+                                }))
+                            }
+                        >
+                            <X size={14} />
+                        </ActionIcon>
+                    }
+                    value={columnFilters["email"] || ""}
+                    onChange={(e) =>
+                        handleColumnSearchChange("email", e.target.value)
+                    }
+                />
+            ),
+            filtering: !!columnFilters["email"],
+        },
+        {
+            key: "phone",
+            accessor: "phone",
+            title: "Phone Number",
+            sortable: true,
+            style: {
+                whiteSpace: "normal",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+            },
+            filter: (
+                <TextInput
+                    label="phone Number"
+                    placeholder="Search item..."
+                    leftSection={<FileSearch size={16} />}
+                    rightSection={
+                        <ActionIcon
+                            size="sm"
+                            variant="transparent"
+                            c="dimmed"
+                            onClick={() =>
+                                setColumnFilters((prevFilters) => ({
+                                    ...prevFilters,
+                                    phone: "",
+                                }))
+                            }
+                        >
+                            <X size={14} />
+                        </ActionIcon>
+                    }
+                    value={columnFilters["phone"] || ""}
+                    onChange={(e) =>
+                        handleColumnSearchChange("phone", e.target.value)
+                    }
+                />
+            ),
+            filtering: !!columnFilters["phone"],
+        },
         {
             key: "action",
             accessor: "action",
@@ -207,7 +309,7 @@ export default function Records() {
             },
             render: (row) => (
                 <div className="my-1 w-fit">
-                    <Link to="">
+                    <Link to={`/records/${row.id}`}>
                         <button className="w-fit py-1 px-3 bg-slate-600 text-white rounded-md text-lg font-semibold hover:bg-slate-700 cursor-pointer">
                             view
                         </button>
@@ -228,7 +330,17 @@ export default function Records() {
                 </div>
 
                 {can(user, "upload_document") && (
-                    <button className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
+                    <button className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition cursor-pointer"
+                        onClick={() =>
+                            openModal(
+                                <RecordForm
+                                    navigateTo={navigateTo}
+                                />,
+                                "xl7",
+                                "Create New Record Profile"
+                            )
+                        }
+                    >
                         <Upload size={18} />
                         Upload Record
                     </button>
@@ -245,7 +357,7 @@ export default function Records() {
                     type="text"
                     placeholder="Search by person or document type..."
                     value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    onChange={handleSearchChange}
                     className="w-full pl-10 pr-4 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 />
             </div>
@@ -266,7 +378,7 @@ export default function Records() {
                             withColumnBorders
                             striped
                             highlightOnHover
-                            records={mockRecords}
+                            records={records}
                             columns={cols}
                             totalRecords={totalRecords}
                             page={page}

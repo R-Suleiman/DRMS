@@ -9,7 +9,7 @@ return [
     |--------------------------------------------------------------------------
     | Limit CORS to only API routes and CSRF endpoint
     */
-    'paths' => ['api/*'],
+    'paths' => ['api/*', 'private/*', 'storage/*', 'records/documents/*'],
 
     /*
     |--------------------------------------------------------------------------

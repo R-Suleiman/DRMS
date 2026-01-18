@@ -20,7 +20,7 @@ class AuthController extends Controller
 
         $user = Auth::user()->load('roles');
 
-        $token = $user->createToken('main', ['*'])->accessToken;
+        $token = $user->createToken('main', ['*'])->plainTextToken;
         $user->tokens()->latest()->first()->update([
             'expires_at' => now()->addDays(7) // or addDays(7)
         ]);

@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Records from "./pages/records/Records";
+import Record from "./pages/records/Record";
 
 const router = createBrowserRouter([
     {
@@ -35,14 +36,14 @@ const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
-            //   {
-            //     path: "roles",
-            //     element: (
-            //       <ProtectedRoute requiredPermissions={['manage_roles']}>
-            //         <Roles />
-            //       </ProtectedRoute>
-            //     ),
-            //   },
+            {
+                path: "records/:id",
+                element: (
+                  <ProtectedRoute requiredPermissions={['view_records']}>
+                    <Record />
+                  </ProtectedRoute>
+                ),
+              },
         ],
     },
 ]);

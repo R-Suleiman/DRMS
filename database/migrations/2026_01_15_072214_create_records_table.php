@@ -11,15 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('persons', function (Blueprint $table) {
+        Schema::create('records', function (Blueprint $table) {
             $table->id();
             $table->string('first_name');
-            $table->string('middle_name');
+            $table->string('middle_name')->nullable();
             $table->string('last_name');
-            $table->string('phone');
-            $table->string('dob');
-            $table->string('gender');
+            $table->string('phone')->unique();
+            $table->date('dob');
+            $table->enum('gender', ['F', 'M']);
             $table->string('email')->unique()->nullable();
+            $table->string('nida')->unique()->nullable();
             $table->string('photo')->nullable();
             $table->timestamps();
         });
@@ -30,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('persons');
+        Schema::dropIfExists('records');
     }
 };

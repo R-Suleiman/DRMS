@@ -9,13 +9,16 @@ import { AuthProvider } from "./context/AuthProvider";
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.layer.css";
 import "mantine-datatable/styles.layer.css";
+import { ModalProvider } from "./context/ModalContext";
 
 createRoot(document.getElementById("root")).render(
     <StrictMode>
         <MantineProvider defaultColorScheme="auto">
             <AuthProvider>
-                <ToastContainer />
-                <RouterProvider router={router} />
+                <ModalProvider>
+                    <ToastContainer />
+                    <RouterProvider router={router} />
+                </ModalProvider>
             </AuthProvider>
         </MantineProvider>
     </StrictMode>

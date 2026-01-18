@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('person_metadata', function (Blueprint $table) {
+        Schema::create('document_categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id')->constrained('persons');
-            $table->string('meta_key');
-            $table->string('meta_value');
+            $table->string('category_name');
             $table->timestamps();
         });
     }
@@ -25,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('person_metadata');
+        Schema::dropIfExists('document_categories');
     }
 };

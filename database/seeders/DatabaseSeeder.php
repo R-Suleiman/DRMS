@@ -14,6 +14,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             \Database\Seeders\RolesAndPermissionsSeeder::class,
             \Database\Seeders\RootAdminSeeder::class,
+            \Database\Seeders\RecordsSeeder::class,
+            \Database\Seeders\DocumentCategorySeeder::class,
+            \Database\Seeders\DocumentTypeSeeder::class,
         ]);
     }
 }

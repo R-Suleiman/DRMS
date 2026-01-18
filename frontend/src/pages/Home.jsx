@@ -21,8 +21,6 @@ export default function Home() {
         axiosClient
             .post(`/login`, { email, password })
             .then(({ data }) => {
-                console.log(data)
-
                 setUser(data.user);
                 setToken(data.token);
 

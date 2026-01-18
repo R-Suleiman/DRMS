@@ -6,11 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
 {
-    protected $fillable = ['person_id', 'type', 'name', 'file_path', 'size', 'created_by', 'updated_by'];
+    protected $fillable = ['record_id', 'category', 'name', 'file_path', 'size', 'mime_type', 'created_by', 'updated_by'];
 
-    public function person()
+    public function record()
     {
-        return $this->belongsTo(Person::class);
+        return $this->belongsTo(Record::class, 'record_id', 'id');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(DocumentCategory::class, 'category', 'id');
+    }
+
+    public function type()
+    {
+        return $this->belongsTo(DocumentType::class, 'name', 'id');
     }
 
     public function createdBy()
@@ -24,13 +34,18 @@ class Document extends Model
     }
 
     // automatically add created_by and updated_by
-    public static function boot() {
-        parent::boot();
-        self::creating(function ($model) {
-            $model->created_by = auth()->id;
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (auth()->check()) {
+                $model->created_by = auth()->id();
+            }
         });
-        self::updating(function ($model) {
-            $model->updated_by = auth()->id;
+
+        static::updating(function ($model) {
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
+            }
         });
     }
 }
