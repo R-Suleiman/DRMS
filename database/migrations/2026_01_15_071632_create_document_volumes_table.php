@@ -11,11 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('record_metadata', function (Blueprint $table) {
+        Schema::create('document_volumes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('record_id')->constrained('records')->onDelete('cascade');
-            $table->string('meta_key');
-            $table->string('meta_value');
+            $table->string('volume_name');
             $table->timestamps();
         });
     }
@@ -25,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('record_metadata');
+        Schema::dropIfExists('document_volumes');
     }
 };

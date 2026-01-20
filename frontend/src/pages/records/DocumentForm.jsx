@@ -6,10 +6,12 @@ import { useModal } from "../../context/ModalContext";
 
 function DocumentForm({ recordId, reload }) {
     const [categories, setCategories] = useState([]);
+    const [volumes, setVolumes] = useState([]);
     const [types, setTypes] = useState([]);
     const [errors, setErrors] = useState([]);
     const { closeModal } = useModal();
     const [formValues, setFormValues] = useState({
+        volume: "",
         category: "",
         type: "",
         file: "",
@@ -25,7 +27,13 @@ function DocumentForm({ recordId, reload }) {
             setCategories(response.data.categories);
         };
 
+        const getVolumes = async () => {
+            const response = await axiosClient.get("/record-volumes");
+            setVolumes(response.data.volumes);
+        };
+
         getCategories();
+        getVolumes()
     }, []);
 
     useEffect(() => {
@@ -59,6 +67,7 @@ function DocumentForm({ recordId, reload }) {
         e.preventDefault();
 
         const data = new FormData();
+        data.append("volume", formValues.volume);
         data.append("category", formValues.category);
         data.append("type", formValues.type);
         data.append("file", formValues.file);
@@ -87,13 +96,40 @@ function DocumentForm({ recordId, reload }) {
     return (
         <div className="w-full">
             <form onSubmit={handleUpload} className="space-y-6">
-            {errors && (
+                {errors && (
                     <div className="p-2 text-red-500 font-semibold">
                         {Object.keys(errors).map((key) => (
                             <p key={key} className='border border-red-600 bg-red-400 rounded-sm p-1 w-fit text-white flex items-center text-sm space-x-2'><div className='text-xs'><FileWarning /></div> <span>{errors[key][0]}</span></p>
                         ))}
                     </div>
                 )}
+
+                {/* Document Volume */}
+                <div className="space-y-2">
+                    <label
+                        htmlFor="volume"
+                        className="flex items-center gap-2 text-sm font-semibold text-slate-700"
+                    >
+                        <FolderOpen size={16} className="text-slate-500" />
+                        Document Volume
+                    </label>
+                    <select
+                        id="volume"
+                        name="volume"
+                        value={formValues.volume}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-700 focus:border-slate-500 focus:ring-2 focus:ring-slate-500/20 focus:outline-none transition-all duration-200 hover:border-slate-300 cursor-pointer"
+                    >
+                        <option value="">Select a volume</option>
+                        {volumes.map((volume) => {
+                            return (
+                                <option key={volume.id} value={volume.id}>
+                                    {volume.volume_name}
+                                </option>
+                            );
+                        })}
+                    </select>
+                </div>
 
                 {/* Document Category */}
                 <div className="space-y-2">
@@ -143,8 +179,8 @@ function DocumentForm({ recordId, reload }) {
                             {!formValues.category
                                 ? "Select a category first"
                                 : types.length === 0
-                                ? "Loading types..."
-                                : "Select a type"}
+                                    ? "Loading types..."
+                                    : "Select a type"}
                         </option>
                         {types.map((type) => {
                             return (
@@ -236,6 +272,7 @@ function DocumentForm({ recordId, reload }) {
                         type="submit"
                         className="w-full group px-6 py-3 text-sm font-semibold rounded-xl bg-linear-to-r from-slate-600 to-slate-700 text-white hover:from-slate-700 hover:to-slate-800 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                         disabled={
+                            !formValues.volume ||
                             !formValues.category ||
                             !formValues.type ||
                             !formValues.file

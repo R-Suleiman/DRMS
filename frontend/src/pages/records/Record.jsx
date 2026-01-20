@@ -12,9 +12,10 @@ import {
     Shield,
     Search,
     ArrowLeft,
+    Trash,
 } from "lucide-react";
 import { can } from "../../utils/auth";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../context/AuthProvider";
 import { showConfirmAlert, showTopErrorAlert, showTopSuccessAlert } from "../../utils/sweetAlert";
 import axiosClient from "../../assets/js/axios-client";
@@ -45,6 +46,7 @@ export default function Record() {
     const [record, setRecord] = useState({});
     const [loading, setLoading] = useState(true);
     const { openModal } = useModal();
+    const navigate = useNavigate()
 
     const [page, setPage] = useState(1);
     const [documents, setDocuments] = useState([]);
@@ -77,6 +79,7 @@ export default function Record() {
     const normalizedDocuments = useMemo(() => {
         return documents?.map(doc => ({
             ...doc,
+            volume_name: doc.volume?.volume_name ?? '',
             category_name: doc.category?.category_name ?? '',
             type_name: doc.type?.name ?? '',
         }));
@@ -148,7 +151,25 @@ export default function Record() {
         }
     };
 
-    console.log(record);
+    const deleteRecord = (recordId) => {
+        showConfirmAlert(
+            "Delete Record",
+            "Are you sure you want to delete this Profile? All the documents for this profile will be deleted too",
+            () => deleteRecordCallback(recordId)
+        );
+    };
+
+    const deleteRecordCallback = async (recordId) => {
+        try {
+            const response = await axiosClient.delete(
+                `/records/${recordId}`
+            );
+            showTopSuccessAlert(response.data.message);
+            navigate('/records')
+        } catch (error) {
+            showTopErrorAlert(error);
+        }
+    };
 
     const viewDocument = (documentId) => {
         const url = `${import.meta.env.VITE_API_BASE_URL}/records/documents/${documentId}`;
@@ -163,6 +184,10 @@ export default function Record() {
             day: "numeric",
         });
     };
+
+    const navigateTo = (route) => {
+        getRecord();
+    }
 
     const cols = [
         {
@@ -185,6 +210,11 @@ export default function Record() {
             sortable: true,
         },
         {
+            accessor: "volume.volume_name",
+            title: "Volume Number",
+            sortable: true,
+        },
+        {
             accessor: "size",
             title: "Size",
             render: (row) => <span>{(row.size / 1000000).toFixed(2)} MB</span>,
@@ -203,16 +233,6 @@ export default function Record() {
                 <div className="flex items-center justify-end gap-2">
                     {can(user, "view_document") && (
                         <button className="p-2 rounded-lg text-blue-600 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 group/btn"
-                            // onClick={() =>
-                            //     openModal(
-                            //         <DocumentViewer
-                            //             documentId={row.id}
-                            //         />,
-                            //         "xl7",
-                            //         "Preview Record Documents"
-                            //     )
-                            // }
-
                             onClick={() => viewDocument(row.id)}
                         >
                             <Eye
@@ -378,13 +398,13 @@ export default function Record() {
 
                         {/* Actions */}
                         <div className="flex flex-col gap-3">
-                            {can(user, "update_person") && (
+                            {can(user, "update_record") && (
                                 <button className="group px-6 py-3 text-sm font-medium rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50 text-slate-700 hover:text-slate-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
                                     onClick={() =>
                                         openModal(
                                             <RecordForm
                                                 record={record}
-                                                reload={getRecord}
+                                                navigateTo={navigateTo}
                                             />,
                                             "xl7",
                                             "Edit Record"
@@ -396,6 +416,19 @@ export default function Record() {
                                         className="group-hover:rotate-12 transition-transform"
                                     />
                                     Edit Profile
+                                </button>
+                            )}
+
+                            {can(user, "delete_record") && (
+                                <button
+                                    className="group px-6 py-3 text-sm font-medium rounded-xl bg-linear-to-r from-red-600 to-red-600 text-white hover:from-red-700 hover:to-red-700 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                                    onClick={() => deleteRecord(record.id)}
+                                >
+                                    <Trash
+                                        size={16}
+                                        className="group-hover:translate-y-[-2px] transition-transform"
+                                    />
+                                    Delete Profile
                                 </button>
                             )}
 
@@ -417,7 +450,7 @@ export default function Record() {
                                         size={16}
                                         className="group-hover:translate-y-[-2px] transition-transform"
                                     />
-                                    Upload Record
+                                    Upload Document
                                 </button>
                             )}
                         </div>

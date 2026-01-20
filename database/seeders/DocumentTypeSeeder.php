@@ -12,12 +12,12 @@ class DocumentTypeSeeder extends Seeder
 
     public function run()
     {
-        DocumentType::firstOrCreate(
+       $type1 = DocumentType::firstOrCreate(
             ['category_id' => 1],
             ['name' => 'Form 4'],
         );
 
-        DocumentType::firstOrCreate(
+        $type2 = DocumentType::firstOrCreate(
             ['category_id' => 1],
             ['name' => 'Form 6'],
         );

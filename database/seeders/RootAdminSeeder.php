@@ -16,12 +16,13 @@ class RootAdminSeeder extends Seeder
         $user = User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
-                'name' => 'Root Admin',
+                'first_name' => 'Root',
+                'last_name' => 'Admin',
                 'password' => Hash::make('password'),
             ]
         );
 
-        $user->assignRole('admin');
+        $user->assignRole('root admin');
     }
 }
 

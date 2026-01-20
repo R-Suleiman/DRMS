@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
+use App\Models\DocumentVolume;
 use App\Models\Record;
 use App\Models\RecordMetadata;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -24,7 +24,7 @@ class RecordsController extends Controller
         $columnFilters = $request->all();
         unset($columnFilters['per_page'], $columnFilters['page'], $columnFilters['sort_by'], $columnFilters['sort_order'], $columnFilters['search']);
 
-        $RecordsQuery = Record::query()->with('metadata')
+        $RecordsQuery = Record::query()
             ->where(function ($query) use ($search) {
                 if (!empty($search)) {
                     $query->where('first_name', 'like', "%$search%")
@@ -33,20 +33,15 @@ class RecordsController extends Controller
                         ->orWhere('phone', 'like', "%$search%")
                         ->orWhere('gender', 'like', "%$search%")
                         ->orWhere('email', 'like', "%$search%")
-                        ->orWhereHas('metadata', function ($q) use ($search) {
-                            $q->where('nida', 'like', "%$search%");
-                        });
+                        ->orWhere('nida', 'like', "%$search%");
                 }
             });
 
         foreach ($columnFilters as $column => $value) {
-            if ($column === 'nida') {
-                $RecordsQuery->whereHas('metadata', function ($q) use ($value) {
-                    $q->where('nida', 'like', "%$value%");
-                });
-            } else {
-                $RecordsQuery->where("records.$column", 'like', "%$value%");
+            if($value === '' || $value === null) {
+                continue;
             }
+            $RecordsQuery->where("records.$column", 'like', "%$value%");
         }
 
         $records = $RecordsQuery->orderBy($sortBy, $sortDirection)->paginate($perPage);
@@ -56,7 +51,7 @@ class RecordsController extends Controller
 
     public function record($id)
     {
-        $record = Record::with('metadata', 'documents.category', 'documents.type')->where('id', $id)->first();
+        $record = Record::with('metadata', 'documents.category', 'documents.type', 'documents.volume')->where('id', $id)->first();
 
         if (!$record) {
             return response()->json(['success' => false, 'message' => 'Record not found!'], 404);
@@ -238,6 +233,14 @@ class RecordsController extends Controller
         ], 201);
     }
 
+    public function deleteRecord($id) {
+        $record = Record::findOrFail($id);
+
+        $record->delete();
+
+        return response()->json(['success' => true, 'message' => 'Record deleted successfully']);
+    }
+
     public function getRecordPhoto($recordId)
     {
         $record = Record::findOrFail($recordId);
@@ -263,6 +266,7 @@ class RecordsController extends Controller
     {
         $request->validate([
             'category' => 'required|string',
+            'volume' => 'required|string',
             'type' => 'required|string',
             'file' => 'required|file|max:10240', // 10MB
         ]);
@@ -271,14 +275,17 @@ class RecordsController extends Controller
         $file = $request->file('file');
         $uuid = Str::uuid();
         $categoryName = DocumentCategory::where('id', $request->category)->first()->category_name;
+        $volumeName = DocumentVolume::where('id', $request->volume)->first()->volume_name;
+        $volumeName2 = Str::replace(' ', '_', $volumeName);
 
         $path = $file->storeAs(
-            "documents/persons/{$person->id}/{$categoryName}",
+            "documents/persons/{$person->id}/{$volumeName2}/{$categoryName}",
             "{$uuid}." . $file->getClientOriginalExtension()
         );
 
         $document = Document::create([
             'record_id' => $person->id,
+            'volume_id' => $request->volume,
             'category' => $request->category,
             'name' => $request->type,
             'file_path' => $path,
@@ -378,5 +385,16 @@ class RecordsController extends Controller
         }
 
         return response()->json(['success' => true, 'types' => $types], 200);
+    }
+
+    public function getRecordVolumes()
+    {
+        $volumes = DocumentVolume::all();
+
+        if (!$volumes) {
+            return response()->json(['success' => false, 'message' => 'No Document Volumes found'], 404);
+        }
+
+        return response()->json(['success' => true, 'volumes' => $volumes], 200);
     }
 }

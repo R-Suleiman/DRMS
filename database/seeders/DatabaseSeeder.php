@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             \Database\Seeders\RecordsSeeder::class,
             \Database\Seeders\DocumentCategorySeeder::class,
             \Database\Seeders\DocumentTypeSeeder::class,
+            \Database\Seeders\DocumentVolumeSeeder::class,
         ]);
     }
 }

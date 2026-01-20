@@ -21,13 +21,18 @@ class RolesAndPermissionsSeeder extends Seeder
         $permissions = [
             'manage_users',
             'manage_roles',
-            'create_person',
-            'update_person',
+            'create_user',
+            'update_user',
+            'delete_user',
+            'reset_user_password',
             'upload_document',
             'view_records',
+            'update_record',
+            'delete_record',
             'view_document',
             'view_dashboard',
             'delete_document',
+            'change_password',
         ];
 
         foreach ($permissions as $permission) {
@@ -36,6 +41,11 @@ class RolesAndPermissionsSeeder extends Seeder
                 'guard_name' => $guard,
             ]);
         }
+
+        $rootAdmin = Role::firstOrCreate([
+            'name' => 'root admin',
+            'guard_name' => $guard,
+        ]);
 
         $admin = Role::firstOrCreate([
             'name' => 'admin',
@@ -47,16 +57,22 @@ class RolesAndPermissionsSeeder extends Seeder
             'guard_name' => $guard,
         ]);
 
+        $rootAdmin->syncPermissions(Permission::where('guard_name', $guard)->get());
+
         $admin->syncPermissions(Permission::where('guard_name', $guard)->get());
 
         $registrar->syncPermissions([
-            'create_person',
-            'update_person',
+            'create_user',
+            'update_user',
+            'delete_user',
             'upload_document',
             'view_records',
+            'update_record',
+            'delete_record',
             'delete_document',
             'view_dashboard',
             'view_document',
+            'change_password',
         ]);
     }
 }

@@ -6,6 +6,10 @@ import AdminLayout from "./layouts/AdminLayout";
 import Dashboard from "./pages/Dashboard";
 import Records from "./pages/records/Records";
 import Record from "./pages/records/Record";
+import Roles from "./pages/roles/Roles";
+import Users from "./pages/users/Users";
+import Unauthorized from "./pages/Unauthorized";
+import ChangePassword from "./pages/ChangePassword";
 
 const router = createBrowserRouter([
     {
@@ -13,13 +17,13 @@ const router = createBrowserRouter([
         element: <MainLayout />,
         children: [
             { index: true, element: <Home /> },
-            // { path: about, element: <About />}
+            // { path: Unauthorized, element: <Unauthorized />}
         ],
     },
     {
         path: "/",
         element: (
-            <ProtectedRoute allowedRoles={['admin', 'registrar']}>
+            <ProtectedRoute allowedRoles={['root admin', 'admin', 'registrar']}>
                 <AdminLayout />
             </ProtectedRoute>
         ),
@@ -31,19 +35,49 @@ const router = createBrowserRouter([
             {
                 path: "records",
                 element: (
-                  <ProtectedRoute requiredPermissions={['view_records']}>
-                    <Records />
-                  </ProtectedRoute>
+                    <ProtectedRoute requiredPermissions={['view_records']}>
+                        <Records />
+                    </ProtectedRoute>
                 ),
-              },
+            },
             {
                 path: "records/:id",
                 element: (
-                  <ProtectedRoute requiredPermissions={['view_records']}>
-                    <Record />
-                  </ProtectedRoute>
+                    <ProtectedRoute requiredPermissions={['view_records']}>
+                        <Record />
+                    </ProtectedRoute>
                 ),
-              },
+            },
+            {
+                path: "roles",
+                element: (
+                    <ProtectedRoute requiredPermissions={['manage_roles']}>
+                        <Roles />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "users",
+                element: (
+                    <ProtectedRoute requiredPermissions={['manage_users']}>
+                        <Users />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "change_password",
+                element: (
+                    <ProtectedRoute requiredPermissions={['change_password']}>
+                    <ChangePassword />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "unauthorized",
+                element: (
+                    <Unauthorized />
+                ),
+            },
         ],
     },
 ]);

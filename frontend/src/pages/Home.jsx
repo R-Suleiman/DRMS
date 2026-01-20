@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock } from "lucide-react";
+import { FileWarning, Lock } from "lucide-react";
 import RecordsImage from "../assets/images/records-1.png";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
@@ -91,7 +91,7 @@ export default function Home() {
                     {errors && (
                         <div className="p-2 text-red-500 font-semibold">
                             {Object.keys(errors).map((key) => (
-                                <p key={key}>{errors[key][0]}</p>
+                                <p key={key} className='border border-red-600 bg-red-400 rounded-sm p-1 w-fit text-white flex items-center text-sm space-x-2'><div className='text-xs'><FileWarning /></div> <span>{errors[key][0]}</span></p>
                             ))}
                         </div>
                     )}

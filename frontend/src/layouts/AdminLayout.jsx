@@ -9,22 +9,22 @@ import {
     User,
     Menu,
     X,
+    Key,
+    Cog,
+    House,
 } from "lucide-react";
 import { useAuth } from "../context/AuthProvider";
 import { can } from "../utils/auth";
 
 const menuItems = [
     {
+        border: "Home",
+        borderIcon: House,
+        mt: 0,
         name: "Dashboard",
         path: "/dashboard",
         icon: LayoutDashboard,
         permission: "view_dashboard",
-    },
-    {
-        name: "Users",
-        path: "/users",
-        icon: Users,
-        permission: "manage_users",
     },
     {
         name: "Records",
@@ -33,9 +33,24 @@ const menuItems = [
         permission: "view_records",
     },
     {
+        border: "Settings",
+        borderIcon: Cog,
+        mt: 8,
+        name: "Users",
+        path: "/users",
+        icon: Users,
+        permission: "manage_users",
+    },
+    {
         name: "Roles & Permissions",
         path: "/roles",
         icon: Shield,
+        permission: "manage_roles",
+    },
+    {
+        name: "Change Password",
+        path: "/change_password",
+        icon: Key,
         permission: "manage_roles",
     },
 ];
@@ -138,8 +153,11 @@ function AdminLayout() {
                         if (!can(user, item.permission)) return null;
 
                         const Icon = item.icon;
+                        const BorderIcon = item.borderIcon ?? null
 
                         return (
+                            <div>
+                                {item.border && <p className={`mt-${item.mt} px-4 py-3 flex items-center justify-between bg-slate-800/30 rounded-md`}><span>{item.border}</span> <BorderIcon size={18}/></p>}
                             <NavLink
                                 key={item.name}
                                 to={item.path}
@@ -156,6 +174,7 @@ function AdminLayout() {
                                 <Icon size={18} />
                                 {item.name}
                             </NavLink>
+                            </div>
                         );
                     })}
                 </nav>
@@ -203,7 +222,10 @@ function AdminLayout() {
                                 <User size={18} className="text-slate-700" />
                             </div>
                             <span className="font-medium text-gray-700 hidden sm:block">
-                                {user.name}
+                            {user.first_name}{" "}
+                                    {user.middle_name &&
+                                        user.middle_name + " "}
+                                    {user.last_name}
                             </span>
                         </div>
                         {profileDropdown && (
