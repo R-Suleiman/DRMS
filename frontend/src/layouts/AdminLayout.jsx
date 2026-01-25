@@ -51,7 +51,7 @@ const menuItems = [
         name: "Change Password",
         path: "/change_password",
         icon: Key,
-        permission: "manage_roles",
+        permission: "change_password",
     },
 ];
 
