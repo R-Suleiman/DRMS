@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('email')->unique()->nullable();
             $table->string('nida')->unique()->nullable();
             $table->string('photo')->nullable();
+            $table->boolean('is_classified')->default(false);
             $table->timestamps();
         });
     }

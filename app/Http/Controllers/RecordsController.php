@@ -8,7 +8,9 @@ use App\Models\DocumentType;
 use App\Models\DocumentVolume;
 use App\Models\Record;
 use App\Models\RecordMetadata;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -24,7 +26,13 @@ class RecordsController extends Controller
         $columnFilters = $request->all();
         unset($columnFilters['per_page'], $columnFilters['page'], $columnFilters['sort_by'], $columnFilters['sort_order'], $columnFilters['search']);
 
-        $RecordsQuery = Record::query()
+        $RecordsQuery = Record::query();
+
+        if (!optional(Auth::user())->can('manage_classified_records')) {
+            $RecordsQuery->where('is_classified', false);
+        }
+
+        $RecordsQuery
             ->where(function ($query) use ($search) {
                 if (!empty($search)) {
                     $query->where('first_name', 'like', "%$search%")
@@ -38,7 +46,7 @@ class RecordsController extends Controller
             });
 
         foreach ($columnFilters as $column => $value) {
-            if($value === '' || $value === null) {
+            if ($value === '' || $value === null) {
                 continue;
             }
             $RecordsQuery->where("records.$column", 'like', "%$value%");
@@ -83,6 +91,7 @@ class RecordsController extends Controller
             ],
             'photo'    => 'nullable|file|mimes:png,jpg,avif,webp|max:5120',
             'metadata' => 'nullable|json',
+            'is_classified' => 'nullable|boolean',
         ]);
 
         $record = Record::create([
@@ -94,6 +103,7 @@ class RecordsController extends Controller
             'phone'       => $validated['phone'],
             'email'       => $validated['email'] ?? null,
             'nida'        => $validated['nida'] ?? null,
+            'is_classified' => $validated['is_classified'] ?? false,
         ]);
 
         if ($request->hasFile('photo')) {
@@ -111,7 +121,6 @@ class RecordsController extends Controller
             ]);
         }
 
-        // Insert metadata
         if (!empty($validated['metadata'])) {
             $metadata = json_decode($validated['metadata'], true);
 
@@ -151,6 +160,7 @@ class RecordsController extends Controller
                 ],
                 'photo'    => 'nullable|file|mimes:png,jpg,avif,webp|max:5120',
                 'metadata' => 'nullable|json',
+                'is_classified' => 'nullable|boolean',
             ],
             [
                 'first_name.required' => 'First name is required.',
@@ -190,6 +200,7 @@ class RecordsController extends Controller
             'phone'       => $validated['phone'],
             'email'       => $validated['email'] ?? null,
             'nida'        => $validated['nida'] ?? null,
+            'is_classified' => $validated['is_classified'] ?? false,
         ]);
 
         $path = $existingRecord->photo;
@@ -233,7 +244,8 @@ class RecordsController extends Controller
         ], 201);
     }
 
-    public function deleteRecord($id) {
+    public function deleteRecord($id)
+    {
         $record = Record::findOrFail($id);
 
         $record->delete();

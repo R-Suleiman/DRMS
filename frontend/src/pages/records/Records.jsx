@@ -94,7 +94,7 @@ export default function Records() {
         navigate(route)
     }
 
-    const cols = [
+    let cols = [
         {
             key: "sn",
             accessor: "sn",
@@ -332,26 +332,36 @@ export default function Records() {
                 />
             ),
             filtering: !!columnFilters["phone"],
-        },
-        {
-            key: "action",
-            accessor: "action",
-            title: "Action",
-            sortable: false,
-            thProps: {
-                style: { whiteSpace: "normal", wordBreak: "break-word" },
-            },
-            render: (row) => (
-                <div className="my-1 w-fit">
-                    <Link to={`/records/${row.id}`}>
-                        <button className="w-fit py-1 px-3 bg-slate-600 text-white rounded-md text-lg font-semibold hover:bg-slate-700 cursor-pointer">
-                            view
-                        </button>
-                    </Link>
-                </div>
-            ),
-        },
+        }
     ];
+
+    if (can(user, "manage_classified_records")) {
+        cols.push({
+            accessor: "is_classified",
+            title: "Classified",
+            sortable: true,
+            render: (row) => (row.is_classified ? <div className="w-fit py-1 px-3 bg-red-600 text-white rounded-md text-lg font-semibold hover:bg-red-700 cursor-pointer">Classified</div> : <div className="w-fit py-1 px-3 bg-green-600 text-white rounded-md text-lg font-semibold hover:bg-green-700 cursor-pointer">Unclassified</div>),
+        });
+    }
+
+    cols.push({
+        key: "action",
+        accessor: "action",
+        title: "Action",
+        sortable: false,
+        thProps: {
+            style: { whiteSpace: "normal", wordBreak: "break-word" },
+        },
+        render: (row) => (
+            <div className="my-1 w-fit">
+                <Link to={`/records/${row.id}`}>
+                    <button className="w-fit py-1 px-3 bg-slate-600 text-white rounded-md text-lg font-semibold hover:bg-slate-700 cursor-pointer">
+                        view
+                    </button>
+                </Link>
+            </div>
+        ),
+    })
 
     return (
         <div className="space-y-6">

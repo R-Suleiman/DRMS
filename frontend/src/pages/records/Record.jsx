@@ -296,11 +296,12 @@ export default function Record() {
                         {/* Info */}
                         <div className="flex-1 space-y-4">
                             <div>
-                                <h1 className="text-3xl font-bold bg-linear-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent">
+                                <h1 className="text-3xl font-bold bg-linear-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent flex items-center gap-2">
                                     {record.first_name}{" "}
                                     {record.middle_name &&
                                         record.middle_name + " "}
                                     {record.last_name}
+                                    {record.is_classified ? <span className="text-sm font-medium capitalize bg-red-500 text-white px-2 py-1 rounded-md">Classified</span> : <span className="text-sm font-medium capitalize bg-green-500 text-white px-2 py-1 rounded-md">Unclassified</span>}
                                 </h1>
                                 <div className="flex items-center gap-2 mt-2">
                                     <Shield

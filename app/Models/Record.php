@@ -16,10 +16,12 @@ class Record extends Model
         'email',
         'nida',
         'photo',
+        'is_classified',
     ];
 
     protected $casts = [
         'dob' => 'date:Y-m-d',
+        'is_classified' => 'boolean',
     ];
 
     protected $appends = ['photo_url'];

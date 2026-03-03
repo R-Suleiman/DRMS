@@ -3,8 +3,11 @@ import { FileWarning, FolderOpen, Upload, User } from "lucide-react";
 import { useModal } from '../../context/ModalContext';
 import axiosClient from '../../assets/js/axios-client';
 import { showTopSuccessAlert } from '../../utils/sweetAlert';
+import { can } from '../../utils/auth';
+import { useAuth } from '../../context/AuthProvider';
 
 function RecordForm({ navigateTo, record = null }) {
+    const { user } = useAuth()
     const { closeModal } = useModal()
     const [errors, setErrors] = useState([])
     const [loading, setLoading] = useState(false)
@@ -18,6 +21,7 @@ function RecordForm({ navigateTo, record = null }) {
         email: record?.email || '',
         nida: record?.nida || '',
         photo: '',
+        is_classified: record?.is_classified || false,
     })
     const [metadata, setMetadata] = useState({
         shelf_no: record?.metadata.find((m) => m.meta_key === 'shelf_no')?.meta_value || '',
@@ -26,8 +30,14 @@ function RecordForm({ navigateTo, record = null }) {
     })
 
     const handleInputChange = (e) => {
-        setFormValues({ ...formValues, [e.target.name]: e.target.value });
+        const { name, type, checked, value } = e.target;
+
+        setFormValues((prev) => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value,
+        }));
     };
+
 
     const handleMetadataChange = (e) => {
         setMetadata({ ...metadata, [e.target.name]: e.target.value });
@@ -55,11 +65,12 @@ function RecordForm({ navigateTo, record = null }) {
         data.append("nida", formValues.nida);
         data.append("photo", formValues.photo);
         data.append("metadata", JSON.stringify(metadata));
+        data.append("is_classified", formValues.is_classified ? 1 : 0);
 
         try {
             let response = null
             if (record && record.id) {
-                 response = await axiosClient.post(`/records/${record.id}/update`,
+                response = await axiosClient.post(`/records/${record.id}/update`,
                     data,
                     {
                         headers: { "Content-Type": "multipart/form-data" },
@@ -67,7 +78,7 @@ function RecordForm({ navigateTo, record = null }) {
                 )
 
             } else {
-                 response = await axiosClient.post('/records',
+                response = await axiosClient.post('/records',
                     data,
                     {
                         headers: { "Content-Type": "multipart/form-data" },
@@ -307,6 +318,25 @@ function RecordForm({ navigateTo, record = null }) {
                             className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-white text-slate-700 focus:border-slate-500 focus:ring-2 focus:ring-slate-500/20 focus:outline-none transition-all duration-200 hover:border-slate-300"
                         />
                     </div>
+
+                    {can(user, 'manage_classified_records') && (
+                        <div className="flex items-center gap-2 text-sm mt-2">
+                            <label
+                                htmlFor="is_classified"
+                                className="font-semibold text-slate-700"
+                            >
+                                Mark as Classified
+                            </label>
+                            <input
+                                type='checkbox'
+                                className='w-5 h-5'
+                                name="is_classified"
+                                value={true}
+                                checked={!!formValues.is_classified}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div className="pt-4">
