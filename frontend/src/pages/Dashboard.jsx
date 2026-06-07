@@ -1,140 +1,134 @@
 import React, { useEffect, useState } from "react";
 import {
-    Activity,
     Users,
     FileText,
     ShieldCheck,
     Upload,
     Bell,
-    AlertTriangle,
-    Clock3,
     ArrowRight,
 } from "lucide-react";
+import {
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    CartesianGrid,
+    XAxis,
+    YAxis,
+    Tooltip,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    Legend,
+} from "recharts";
 import { can } from "../utils/auth";
 import axiosClient from "../assets/js/axios-client";
 import { Link, useNavigate } from "react-router-dom";
 import RecordForm from "./records/RecordForm";
 import { useModal } from "../context/ModalContext";
 import { useAuth } from "../context/AuthProvider";
+import ServiceRecordForm from "./records/ServiceRecords/ServiceRecordForm";
 
 function Dashboard() {
     const { user } = useAuth();
-    const [statsData, setStatsData] = useState([])
-    const [stats, setStats] = useState([])
-    const navigate = useNavigate()
-    const { openModal } = useModal()
+    const [statsData, setStatsData] = useState({});
+    const [stats, setStats] = useState([]);
+    const navigate = useNavigate();
+    const { openModal } = useModal();
 
     useEffect(() => {
         const getStats = async () => {
-            const response = await axiosClient.get('/stats')
+            const response = await axiosClient.get('/stats');
             if (response.data && response.data.success) {
-                setStatsData(response.data.stats)
+                setStatsData(response.data.stats);
             }
-        }
+        };
 
-        getStats()
-    }, [])
+        getStats();
+    }, []);
 
     useEffect(() => {
         setStats([
             {
-                title: "Total Records",
-                value: statsData.totalRecords,
+                title: "Total Personal Records",
+                value: statsData.totalPersonalRecords ?? 0,
+                icon: FileText,
+            },
+            {
+                title: "Total Service Records",
+                value: statsData.totalServiceRecords ?? 0,
                 icon: FileText,
             },
             {
                 title: "Documents Uploaded",
-                value: statsData.totalDocuments,
+                value: statsData.totalDocuments ?? 0,
                 icon: Upload,
             },
             {
                 title: "System Users",
-                value: statsData.users,
+                value: statsData.users ?? 0,
                 icon: Users,
             },
+            {
+                title: "Document Categories",
+                value: statsData.categories ?? 0,
+                icon: ShieldCheck,
+            },
+            {
+                title: "Document Types",
+                value: statsData.types ?? 0,
+                icon: FileText,
+            },
+            {
+                title: "Document Volumes",
+                value: statsData.volumes ?? 0,
+                icon: Upload,
+            },
         ]);
-    }, [statsData])
+    }, [statsData]);
 
     const navigateTo = (route) => {
-        navigate(route)
-    }
+        navigate(route);
+    };
 
-    const activities = [
-        {
-            title: "New record added",
-            description: "Jane Doe (Record ID: 4932)",
-            time: "2m ago",
-            icon: Activity,
-        },
-        {
-            title: "Document uploaded",
-            description: "Birth Certificate - John Smith",
-            time: "18m ago",
-            icon: Upload,
-        },
-        {
-            title: "Role updated",
-            description: "Admin role permissions adjusted",
-            time: "1h ago",
-            icon: ShieldCheck,
-        },
-        {
-            title: "Security warning",
-            description: "2 failed login attempts",
-            time: "2h ago",
-            icon: AlertTriangle,
-        },
+    const categoryData = statsData.documentsByCategory ?? [];
+    const volumeData = statsData.documentsByVolume ?? [];
+    const roleData = statsData.usersByRole ?? [];
+    const recordsPeriod = statsData.recordsByMonth ?? [];
+
+    const donutColors = [
+        '#0f172a',
+        '#334155',
+        '#475569',
+        '#64748b',
+        '#1e293b',
+        '#0ea5e9',
     ];
 
     return (
         <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 p-3 sm:p-6 lg:py-8 lg:px-2">
             <div className="max-w-11/12 mx-auto space-y-8">
-                {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <p className="text-sm font-semibold text-slate-500">
-                            Welcome back,
-                        </p>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
-                            Dashboard
-                        </h1>
+                        <p className="text-sm font-semibold text-slate-500">Welcome back,</p>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">Dashboard</h1>
                         <p className="text-sm text-slate-500 mt-1">
-                            Monitor records, documents, and security at a glance.
+                            Monitor records, documents, staff trends, and system health at a glance.
                         </p>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-slate-700 bg-white border border-slate-200 shadow-sm hover:shadow-md transition">
-                            <Bell size={16} />
-                            Notifications
-                        </button>
-                        <button className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 shadow-lg transition">
-                            <Upload size={16} />
-                            Quick Upload
-                        </button>
                     </div>
                 </div>
 
-                {/* Stats */}
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {stats.map((item) => {
                         const Icon = item.icon;
                         return (
-                            <div
-                                key={item.title}
-                                className="relative overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition p-5"
-                            >
-                                <div
-                                    className="absolute inset-0 opacity-80 bg-linear-to-br from-slate-500/20 to-slate-600/15"
-                                />
+                            <div key={item.title} className="relative overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition p-5">
+                                <div className="absolute inset-0 opacity-80 bg-linear-to-br from-slate-500/20 to-slate-600/15" />
                                 <div className="relative flex items-start justify-between">
                                     <div className="space-y-2">
-                                        <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">
-                                            {item.title}
-                                        </p>
-                                        <h3 className="text-2xl font-bold text-slate-900">
-                                            {item.value}
-                                        </h3>
+                                        <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold">{item.title}</p>
+                                        <h3 className="text-2xl font-bold text-slate-900">{item.value}</h3>
                                     </div>
                                     <div className="p-3 rounded-xl bg-white/80 text-slate-700 shadow-sm">
                                         <Icon size={22} />
@@ -145,104 +139,181 @@ function Dashboard() {
                     })}
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-3">
-                    {/* Recent activity */}
-                    <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                            <div>
-                                <h3 className="text-lg font-semibold text-slate-800">
-                                    Recent Activity
-                                </h3>
-                                <p className="text-sm text-slate-500">
-                                    Latest updates across records and documents.
-                                </p>
+                <div className="grid gap-6 xl:grid-cols-3">
+                    <div className="xl:col-span-2 grid gap-6">
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                            <div className="flex items-center justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-800">Record Growth</h3>
+                                    <p className="text-sm text-slate-500">Last 6 months of record creation</p>
+                                </div>
+                                <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                                    Trend
+                                </span>
                             </div>
-                            <button className="text-sm font-semibold text-slate-600 hover:text-slate-800 inline-flex items-center gap-1">
-                                View all
-                                <ArrowRight size={14} />
-                            </button>
+                            <div className="h-[320px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <AreaChart data={recordsPeriod} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="recordGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#0f172a" stopOpacity={0.8} />
+                                                <stop offset="95%" stopColor="#0f172a" stopOpacity={0.08} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                                        <XAxis dataKey="label" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
+                                        <YAxis tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
+                                        <Tooltip wrapperStyle={{ borderRadius: '12px', borderColor: '#e2e8f0' }} />
+                                        <Area type="monotone" dataKey="total" stroke="#0f172a" strokeWidth={3} fill="url(#recordGradient)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
-                        <div className="divide-y divide-slate-100">
-                            {activities.map((activity, index) => {
-                                const Icon = activity.icon;
-                                return (
-                                    <div
-                                        key={index}
-                                        className="px-5 py-4 flex items-center gap-4 hover:bg-slate-50/60 transition"
-                                    >
-                                        <div
-                                            className="p-3 rounded-xl text-slate-600 bg-slate-50 flex items-center justify-center"
-                                        >
-                                            <Icon size={18} />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-slate-800">
-                                                {activity.title}
-                                            </p>
-                                            <p className="text-sm text-slate-500 truncate">
-                                                {activity.description}
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                                            <Clock3 size={14} />
-                                            {activity.time}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+
+                        <div className="grid gap-6 xl:grid-cols-2">
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div className="mb-4">
+                                    <h3 className="text-lg font-semibold text-slate-800">Documents by Category</h3>
+                                    <p className="text-sm text-slate-500">Top categories this month</p>
+                                </div>
+                                <div className="h-[260px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={categoryData} margin={{ top: 10, right: 10, left: -20, bottom: 40 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                                            <XAxis dataKey="category_name" tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} interval={0} angle={-25} textAnchor="end" height={60} />
+                                            <YAxis tick={{ fill: '#475569', fontSize: 12 }} axisLine={false} tickLine={false} />
+                                            <Tooltip wrapperStyle={{ borderRadius: '12px', borderColor: '#e2e8f0' }} />
+                                            <Bar dataKey="total" fill="#0f172a" radius={[8, 8, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                                <div className="mb-4">
+                                    <h3 className="text-lg font-semibold text-slate-800">Documents by Volume</h3>
+                                    <p className="text-sm text-slate-500">Most used volumes</p>
+                                </div>
+                                <div className="h-[260px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={volumeData}
+                                                dataKey="total"
+                                                nameKey="volume_name"
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={40}
+                                                outerRadius={80}
+                                                paddingAngle={4}
+                                                label={({ name, percent }) => `${name}: ${Math.round(percent * 100)}%`}
+                                            >
+                                                {volumeData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={donutColors[index % donutColors.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip wrapperStyle={{ borderRadius: '12px', borderColor: '#e2e8f0' }} />
+                                            <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', color: '#64748b' }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Quick actions & alerts */}
-                    <div className="space-y-4">
-                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-slate-800">
-                                    Quick Actions
-                                </h3>
-                                <span className="text-xs text-slate-500">
-                                    Stay productive
-                                </span>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-800">Staff Overview</h3>
+                                    <p className="text-sm text-slate-500">Users grouped by assigned role</p>
+                                </div>
+                            </div>
+                            <div className="h-[320px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <PieChart>
+                                        <Pie
+                                            data={roleData}
+                                            dataKey="total"
+                                            nameKey="name"
+                                            cx="50%"
+                                            cy="50%"
+                                            innerRadius={48}
+                                            outerRadius={96}
+                                            paddingAngle={4}
+                                            label={({ name, percent }) => `${name}: ${Math.round(percent * 100)}%`}
+                                        >
+                                            {roleData.map((entry, index) => (
+                                                <Cell key={`cell-role-${index}`} fill={donutColors[index % donutColors.length]} />
+                                            ))}
+                                        </Pie>
+                                        <Tooltip wrapperStyle={{ borderRadius: '12px', borderColor: '#e2e8f0' }} />
+                                        <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px', color: '#64748b' }} />
+                                    </PieChart>
+                                </ResponsiveContainer>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-slate-800">Quick Actions</h3>
+                                    <p className="text-sm text-slate-500">Launch key workflows</p>
+                                </div>
                             </div>
                             <div className="space-y-3">
                                 {can(user, "upload_document") && (
                                     <button
-                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-white bg-linear-to-r from-slate-700 to-slate-800 hover:shadow-lg transition cursor-pointer`}
+                                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 transition"
+                                        onClick={() =>
+                                            openModal(
+                                                <RecordForm navigateTo={navigateTo} />,
+                                                "xl7",
+                                                "Create New Personal Record Profile"
+                                            )
+                                        }
                                     >
-                                        <button className="flex items-center gap-3"
-                                            onClick={() =>
-                                                openModal(
-                                                    <RecordForm
-                                                        navigateTo={navigateTo}
-                                                    />,
-                                                    "xl7",
-                                                    "Create New Record Profile"
-                                                )
-                                            }
-                                        >
+                                        <span className="flex items-center gap-3">
                                             <span className="p-2 rounded-lg bg-white/15">
                                                 <Upload size={18} />
                                             </span>
-                                            New Record Profile
-                                        </button>
+                                            New Personal Record Profile
+                                        </span>
+                                        <ArrowRight size={16} />
+                                    </button>
+                                )}
+                                 {can(user, "upload_document") && (
+                                    <button
+                                        className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 transition"
+                                        onClick={() =>
+                                            openModal(
+                                                <ServiceRecordForm navigateTo={navigateTo} />,
+                                                "xl7",
+                                                "Create New Service Record Profile"
+                                            )
+                                        }
+                                    >
+                                        <span className="flex items-center gap-3">
+                                            <span className="p-2 rounded-lg bg-white/15">
+                                                <Upload size={18} />
+                                            </span>
+                                            New Service Record Profile
+                                        </span>
                                         <ArrowRight size={16} />
                                     </button>
                                 )}
                                 {can(user, "manage_roles") && (
-                                <Link to='/roles'>
-                                    <button
-                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-white bg-linear-to-r from-slate-700 to-slate-800 hover:shadow-lg transition cursor-pointer`}
-                                    >
-                                        <button className="flex items-center gap-3"
-                                        >
-                                            <span className="p-2 rounded-lg bg-white/15">
-                                                <ShieldCheck size={18} />
+                                    <Link to='/roles'>
+                                        <button className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold text-white bg-slate-800 hover:bg-slate-900 transition">
+                                            <span className="flex items-center gap-3">
+                                                <span className="p-2 rounded-lg bg-white/15">
+                                                    <ShieldCheck size={18} />
+                                                </span>
+                                                Manage Roles & Permissions
                                             </span>
-                                            Manage Roles & Permissions
+                                            <ArrowRight size={16} />
                                         </button>
-                                        <ArrowRight size={16} />
-                                    </button>
-                                </Link>
+                                    </Link>
                                 )}
                             </div>
                         </div>

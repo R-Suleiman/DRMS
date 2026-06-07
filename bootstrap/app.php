@@ -24,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // API-specific middleware
         $middleware->api([
             'throttle:api',
+            // \App\Http\Middleware\ForceHttpStatusCode::class,
         ]);
 
         $middleware->alias([

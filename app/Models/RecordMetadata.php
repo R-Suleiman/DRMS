@@ -10,6 +10,6 @@ class RecordMetadata extends Model
 
     public function record()
     {
-        return $this->belongsTo(Record::class);
+        return $this->belongsTo(AllRecords::class, 'record_id', 'id');
     }
 }

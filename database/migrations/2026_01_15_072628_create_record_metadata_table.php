@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('record_metadata', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('record_id')->constrained('records')->onDelete('cascade');
+            $table->foreignId('record_id')->constrained('all_records')->onDelete('cascade');
             $table->string('meta_key');
             $table->string('meta_value');
             $table->timestamps();

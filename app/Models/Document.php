@@ -6,11 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
 {
-    protected $fillable = ['record_id', 'volume_id', 'category', 'name', 'file_path', 'size', 'mime_type', 'created_by', 'updated_by'];
+    protected $fillable = ['record_id', 'volume_id', 'category', 'name', 'nature', 'file_path', 'size', 'mime_type', 'created_by', 'updated_by'];
 
     public function record()
     {
-        return $this->belongsTo(Record::class, 'record_id', 'id');
+        return $this->belongsTo(AllRecords::class, 'record_id', 'id');
     }
 
     public function volume()

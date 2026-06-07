@@ -9,6 +9,6 @@ class DocumentVolume extends Model
     protected $fillable = ['volume_name'];
 
     public function documents() {
-        return $this->hasMany(Document::class);
+        return $this->hasMany(Document::class, 'volume_id', 'id');
     }
 }

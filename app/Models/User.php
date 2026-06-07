@@ -44,6 +44,11 @@ class User extends Authenticatable
      *
      * @return array<string, string>
      */
+    public function otpCodes()
+    {
+        return $this->hasMany(OtpCode::class);
+    }
+
     protected function casts(): array
     {
         return [

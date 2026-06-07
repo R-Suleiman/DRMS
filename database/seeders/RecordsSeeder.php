@@ -14,6 +14,7 @@ class RecordsSeeder extends Seeder
 
         for ($i = 1; $i <= 10; $i++) {
             Record::create([
+                'record_id' => $i,
                 'first_name'  => $faker->firstName,
                 'middle_name' => $faker->optional()->firstName,
                 'last_name'   => $faker->lastName,

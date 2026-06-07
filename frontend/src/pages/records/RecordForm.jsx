@@ -12,16 +12,16 @@ function RecordForm({ navigateTo, record = null }) {
     const [errors, setErrors] = useState([])
     const [loading, setLoading] = useState(false)
     const [formValues, setFormValues] = useState({
-        first_name: record?.first_name || '',
-        middle_name: record?.middle_name || '',
-        last_name: record?.last_name || '',
-        gender: record?.gender || '',
-        dob: record?.dob || '',
-        phone: record?.phone || '',
-        email: record?.email || '',
-        nida: record?.nida || '',
+        first_name: record?.personal_records?.[0]?.first_name || '',
+        middle_name: record?.personal_records?.[0]?.middle_name || '',
+        last_name: record?.personal_records?.[0]?.last_name || '',
+        gender: record?.personal_records?.[0]?.gender || '',
+        dob: record?.personal_records?.[0]?.dob || '',
+        phone: record?.personal_records?.[0]?.phone || '',
+        email: record?.personal_records?.[0]?.email || '',
+        nida: record?.personal_records?.[0]?.nida || '',
         photo: '',
-        is_classified: record?.is_classified || false,
+        is_classified: record?.personal_records?.[0]?.is_classified || false,
     })
     const [metadata, setMetadata] = useState({
         shelf_no: record?.metadata.find((m) => m.meta_key === 'shelf_no')?.meta_value || '',
@@ -89,7 +89,7 @@ function RecordForm({ navigateTo, record = null }) {
             if (response.data && response.data.success) {
                 showTopSuccessAlert(response.data.message)
                 closeModal()
-                navigateTo(`/records/${response.data.recordId}`)
+                navigateTo(`/records/personal/${response.data.recordId}`)
             }
         } catch (error) {
             const response = error.response;

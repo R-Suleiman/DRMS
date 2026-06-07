@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('record_id')->constrained('records')->onDelete('cascade');
+            $table->foreignId('record_id')->constrained('all_records')->onDelete('cascade');
             $table->foreignId('volume_id')->constrained('document_volumes');
             $table->foreignId('category')->constrained('document_categories');
             $table->foreignId('name')->constrained('document_types');
+            $table->enum('nature', ['personal', 'service']);
             $table->string('file_path');
             $table->integer('size');
             $table->string('mime_type');

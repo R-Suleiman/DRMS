@@ -13,6 +13,7 @@ import {
     Search,
     ArrowLeft,
     Trash,
+    Folder,
 } from "lucide-react";
 import { can } from "../../utils/auth";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -165,7 +166,7 @@ export default function Record() {
                 `/records/${recordId}`
             );
             showTopSuccessAlert(response.data.message);
-            navigate('/records')
+            navigate('/records/personal')
         } catch (error) {
             showTopErrorAlert(error);
         }
@@ -188,6 +189,8 @@ export default function Record() {
     const navigateTo = (route) => {
         getRecord();
     }
+
+    console.log(record)
 
     const cols = [
         {
@@ -260,7 +263,7 @@ export default function Record() {
     return (
         <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-2 sm:px-6 lg:px-8">
             <div className="max-w-11/12 mx-auto space-y-8">
-                <Link to="/records">
+                <Link to="/records/personal">
                     <div className="bg-slate-600 py-1 px-2 w-fit rounded-md m-2">
                         <ArrowLeft className=" text-white text-2xl" />{" "}
                     </div>
@@ -278,8 +281,8 @@ export default function Record() {
                                 <div className="relative w-32 h-32 rounded-full bg-linear-to-br from-slate-500 via-slate-600 to-slate-800 p-1">
                                     <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
                                         {
-                                            record.photo_url ? <img
-                                                src={record.photo_url}
+                                            record.personal_records?.[0]?.photo_url ? <img
+                                                src={record.personal_records?.[0]?.photo_url}
                                                 alt="Profile photo"
                                                 className="h-full rounded-full object-cover"
                                             /> :
@@ -297,11 +300,11 @@ export default function Record() {
                         <div className="flex-1 space-y-4">
                             <div>
                                 <h1 className="text-3xl font-bold bg-linear-to-r from-slate-800 via-slate-700 to-slate-600 bg-clip-text text-transparent flex items-center gap-2">
-                                    {record.first_name}{" "}
-                                    {record.middle_name &&
-                                        record.middle_name + " "}
-                                    {record.last_name}
-                                    {record.is_classified ? <span className="text-sm font-medium capitalize bg-red-500 text-white px-2 py-1 rounded-md">Classified</span> : <span className="text-sm font-medium capitalize bg-green-500 text-white px-2 py-1 rounded-md">Unclassified</span>}
+                                    {record.personal_records?.[0]?.first_name}{" "}
+                                    {record.personal_records?.[0]?.middle_name &&
+                                        record.personal_records?.[0]?.middle_name + " "}
+                                    {record.personal_records?.[0]?.last_name}
+                                    {record.personal_records?.[0]?.is_classified ? <span className="text-sm font-medium capitalize bg-red-500 text-white px-2 py-1 rounded-md">Classified</span> : <span className="text-sm font-medium capitalize bg-green-500 text-white px-2 py-1 rounded-md">Unclassified</span>}
                                 </h1>
                                 <div className="flex items-center gap-2 mt-2">
                                     <Shield
@@ -309,7 +312,7 @@ export default function Record() {
                                         size={16}
                                     />
                                     <p className="text-sm font-medium text-slate-600 capitalize">
-                                        {record.gender === "F"
+                                        {record.personal_records?.[0]?.gender === "F"
                                             ? "Female"
                                             : "Male"}
                                     </p>
@@ -318,6 +321,23 @@ export default function Record() {
 
                             {/* Metadata */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="group flex items-center gap-3 p-3 rounded-xl bg-linear-to-br from-slate-50 to-slate-50 border border-slate-100/50 hover:shadow-md transition-all duration-200">
+                                    <div className="p-2 rounded-lg bg-slate-500/10 group-hover:bg-slate-500/20 transition-colors">
+                                        <Folder
+                                            className="text-slate-600"
+                                            size={18}
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 font-medium">
+                                            Record Number
+                                        </p>
+                                        <p className="text-sm font-semibold text-slate-700">
+                                            {record?.record_number}
+                                        </p>
+                                    </div>
+                                </div>
+
                                 <div className="group flex items-center gap-3 p-3 rounded-xl bg-linear-to-br from-slate-50 to-slate-50 border border-slate-100/50 hover:shadow-md transition-all duration-200">
                                     <div className="p-2 rounded-lg bg-slate-500/10 group-hover:bg-slate-500/20 transition-colors">
                                         <Calendar
@@ -330,7 +350,7 @@ export default function Record() {
                                             Date of Birth
                                         </p>
                                         <p className="text-sm font-semibold text-slate-700">
-                                            {formatDate(record.dob)}
+                                            {formatDate(record.personal_records?.[0]?.dob)}
                                         </p>
                                     </div>
                                 </div>
@@ -347,7 +367,7 @@ export default function Record() {
                                             Phone
                                         </p>
                                         <p className="text-sm font-semibold text-slate-700">
-                                            {record.phone}
+                                            {record.personal_records?.[0]?.phone}
                                         </p>
                                     </div>
                                 </div>
@@ -364,7 +384,24 @@ export default function Record() {
                                             Email
                                         </p>
                                         <p className="text-sm font-semibold text-slate-700 truncate">
-                                            {record.email}
+                                            {record.personal_records?.[0]?.email}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="group flex items-center gap-3 p-3 rounded-xl bg-linear-to-br from-slate-50 to-slate-50 border border-slate-100/50 hover:shadow-md transition-all duration-200">
+                                    <div className="p-2 rounded-lg bg-slate-500/10 group-hover:bg-slate-500/20 transition-colors">
+                                        <User
+                                            className="text-slate-600"
+                                            size={18}
+                                        />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-slate-500 font-medium">
+                                            NIDA
+                                        </p>
+                                        <p className="text-sm font-semibold text-slate-700 truncate">
+                                            {record.personal_records?.[0]?.nida}
                                         </p>
                                     </div>
                                 </div>
@@ -423,7 +460,7 @@ export default function Record() {
                             {can(user, "delete_record") && (
                                 <button
                                     className="group px-6 py-3 text-sm font-medium rounded-xl bg-linear-to-r from-red-600 to-red-600 text-white hover:from-red-700 hover:to-red-700 flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
-                                    onClick={() => deleteRecord(record.id)}
+                                    onClick={() => deleteRecord(id)}
                                 >
                                     <Trash
                                         size={16}
@@ -439,8 +476,9 @@ export default function Record() {
                                     onClick={() =>
                                         openModal(
                                             <DocumentForm
-                                                recordId={record.id}
+                                                recordId={id}
                                                 reload={getRecord}
+                                                nature='personal'
                                             />,
                                             "xl5",
                                             "Upload Record Documents"

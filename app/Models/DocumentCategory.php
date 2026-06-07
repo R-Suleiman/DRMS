@@ -9,7 +9,7 @@ class DocumentCategory extends Model
     protected $fillable = ['category_name'];
 
     public function documentTypes() {
-        return $this->hasMany(DocumentType::class);
+        return $this->hasMany(DocumentType::class, 'category_id', 'id');
     }
 
     public function documents() {

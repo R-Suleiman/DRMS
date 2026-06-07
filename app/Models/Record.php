@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Record extends Model
 {
     protected $fillable = [
+        'record_id',
         'first_name',
         'middle_name',
         'last_name',
@@ -26,14 +27,13 @@ class Record extends Model
 
     protected $appends = ['photo_url'];
 
+    public function mainRecord() {
+        return $this->belongsTo(AllRecords::class, 'record_id', 'id');
+    }
+
     public function metadata()
     {
         return $this->hasMany(RecordMetadata::class);
-    }
-
-    public function documents()
-    {
-        return $this->hasMany(Document::class, 'record_id', 'id');
     }
 
     public function getPhotoUrlAttribute()

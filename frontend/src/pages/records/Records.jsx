@@ -106,8 +106,46 @@ export default function Records() {
             render: (row, index) => (page - 1) * pageSize + index + 1,
         },
         {
+            key: "record_number",
+            accessor: "record_number",
+            title: "Record Number",
+            sortable: true,
+            style: {
+                whiteSpace: "normal",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+            },
+            filter: (
+                <TextInput
+                    label="record number"
+                    placeholder="Search item..."
+                    leftSection={<FileSearch size={16} />}
+                    rightSection={
+                        <ActionIcon
+                            size="sm"
+                            variant="transparent"
+                            c="dimmed"
+                            onClick={() =>
+                                setColumnFilters((prevFilters) => ({
+                                    ...prevFilters,
+                                    record_number: "",
+                                }))
+                            }
+                        >
+                            <X size={14} />
+                        </ActionIcon>
+                    }
+                    value={columnFilters["record_number"] || ""}
+                    onChange={(e) =>
+                        handleColumnSearchChange("record_number", e.target.value)
+                    }
+                />
+            ),
+            filtering: !!columnFilters["record_number"],
+        },
+        {
             key: "first_name",
-            accessor: "first_name",
+            accessor: "personal_records.0.first_name",
             title: "First Name",
             sortable: true,
             style: {
@@ -145,7 +183,7 @@ export default function Records() {
         },
         {
             key: "middle_name",
-            accessor: "middle_name",
+            accessor: "personal_records.0.middle_name",
             title: "Middle Name",
             sortable: true,
             style: {
@@ -183,7 +221,7 @@ export default function Records() {
         },
         {
             key: "last_name",
-            accessor: "last_name",
+            accessor: "personal_records.0.last_name",
             title: "Last Name",
             sortable: true,
             style: {
@@ -218,44 +256,6 @@ export default function Records() {
                 />
             ),
             filtering: !!columnFilters["last_name"],
-        },
-        {
-            key: "nida",
-            accessor: "nida",
-            title: "NIDA Number",
-            sortable: true,
-            style: {
-                whiteSpace: "normal",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-            },
-            filter: (
-                <TextInput
-                    label="Nida"
-                    placeholder="Search item..."
-                    leftSection={<FileSearch size={16} />}
-                    rightSection={
-                        <ActionIcon
-                            size="sm"
-                            variant="transparent"
-                            c="dimmed"
-                            onClick={() =>
-                                setColumnFilters((prevFilters) => ({
-                                    ...prevFilters,
-                                    nida: "",
-                                }))
-                            }
-                        >
-                            <X size={14} />
-                        </ActionIcon>
-                    }
-                    value={columnFilters["nida"] || ""}
-                    onChange={(e) =>
-                        handleColumnSearchChange("nida", e.target.value)
-                    }
-                />
-            ),
-            filtering: !!columnFilters["nida"],
         },
         {
             key: "email",
@@ -297,7 +297,7 @@ export default function Records() {
         },
         {
             key: "phone",
-            accessor: "phone",
+            accessor: "personal_records.0.phone",
             title: "Phone Number",
             sortable: true,
             style: {
@@ -340,7 +340,7 @@ export default function Records() {
             accessor: "is_classified",
             title: "Classified",
             sortable: true,
-            render: (row) => (row.is_classified ? <div className="w-fit py-1 px-3 bg-red-600 text-white rounded-md text-lg font-semibold hover:bg-red-700 cursor-pointer">Classified</div> : <div className="w-fit py-1 px-3 bg-green-600 text-white rounded-md text-lg font-semibold hover:bg-green-700 cursor-pointer">Unclassified</div>),
+            render: (row) => (row.personal_records?.[0]?.is_classified ? <div className="w-fit py-1 px-3 bg-red-600 text-white rounded-md text-lg font-semibold hover:bg-red-700 cursor-pointer">Classified</div> : <div className="w-fit py-1 px-3 bg-green-600 text-white rounded-md text-lg font-semibold hover:bg-green-700 cursor-pointer">Unclassified</div>),
         });
     }
 
@@ -354,7 +354,7 @@ export default function Records() {
         },
         render: (row) => (
             <div className="my-1 w-fit">
-                <Link to={`/records/${row.id}`}>
+                <Link to={`/records/personal/${row.id}`}>
                     <button className="w-fit py-1 px-3 bg-slate-600 text-white rounded-md text-lg font-semibold hover:bg-slate-700 cursor-pointer">
                         view
                     </button>
@@ -369,7 +369,7 @@ export default function Records() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-800">
-                        Records
+                        Personal Records
                     </h1>
                 </div>
 

@@ -4,7 +4,7 @@ import axiosClient from "../../assets/js/axios-client";
 import { showTopSuccessAlert } from "../../utils/sweetAlert";
 import { useModal } from "../../context/ModalContext";
 
-function DocumentForm({ recordId, reload }) {
+function DocumentForm({ recordId, reload, nature }) {
     const [categories, setCategories] = useState([]);
     const [volumes, setVolumes] = useState([]);
     const [types, setTypes] = useState([]);
@@ -15,6 +15,7 @@ function DocumentForm({ recordId, reload }) {
         category: "",
         type: "",
         file: "",
+        nature: nature || "",
     });
 
     const handleInputChange = (e) => {
@@ -71,7 +72,7 @@ function DocumentForm({ recordId, reload }) {
         data.append("category", formValues.category);
         data.append("type", formValues.type);
         data.append("file", formValues.file);
-
+        data.append("nature", formValues.nature);
         try {
             const response = await axiosClient.post(
                 `/records/${recordId}/documents`,

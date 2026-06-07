@@ -12,6 +12,9 @@ import {
     Key,
     Cog,
     House,
+    ChevronDown,
+    ChevronRight,
+    Building,
 } from "lucide-react";
 import { useAuth } from "../context/AuthProvider";
 import { can } from "../utils/auth";
@@ -31,6 +34,18 @@ const menuItems = [
         path: "/records",
         icon: FileText,
         permission: "view_records",
+        submenu: [
+            {
+                name: "Personal Records",
+                path: "/records/personal",
+                permission: "view_records",
+            },
+            {
+                name: "Service Records",
+                path: "/records/service",
+                permission: "view_records",
+            },
+        ],
     },
     {
         border: "Settings",
@@ -40,6 +55,18 @@ const menuItems = [
         path: "/users",
         icon: Users,
         permission: "manage_users",
+    },
+    {
+        name: "Departments",
+        path: "/departments",
+        icon: Building,
+        permission: "manage_departments",
+    },
+    {
+        name: "Document Settings",
+        path: "/document_settings",
+        icon: FileText,
+        permission: "manage_document_settings",
     },
     {
         name: "Roles & Permissions",
@@ -59,6 +86,7 @@ function AdminLayout() {
     const { user, logout } = useAuth();
     const [profileDropdown, setProfileDropdown] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [expandedMenus, setExpandedMenus] = useState({});
 
     // Close sidebar when clicking outside on mobile
     useEffect(() => {
@@ -153,27 +181,72 @@ function AdminLayout() {
                         if (!can(user, item.permission)) return null;
 
                         const Icon = item.icon;
-                        const BorderIcon = item.borderIcon ?? null
+                        const BorderIcon = item.borderIcon ?? null;
+                        const hasSubmenu = item.submenu && item.submenu.length > 0;
+                        const isExpanded = expandedMenus[item.name] || false;
 
                         return (
-                            <div>
-                                {item.border && <p className={`mt-${item.mt} px-4 py-3 flex items-center justify-between bg-slate-800/30 rounded-md`}><span>{item.border}</span> <BorderIcon size={18}/></p>}
-                            <NavLink
-                                key={item.name}
-                                to={item.path}
-                                onClick={handleNavClick}
-                                className={({ isActive }) =>
-                                    `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition
-                                    ${
-                                        isActive
-                                            ? "bg-slate-800 text-white"
-                                            : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                                    }`
-                                }
-                            >
-                                <Icon size={18} />
-                                {item.name}
-                            </NavLink>
+                            <div key={item.name}>
+                                {item.border && (
+                                    <p className={`mt-${item.mt} px-4 py-3 flex items-center justify-between bg-slate-800/30 rounded-md`}>
+                                        <span>{item.border}</span> <BorderIcon size={18}/>
+                                    </p>
+                                )}
+
+                                {hasSubmenu ? (
+                                    <div>
+                                        <button
+                                            onClick={() => setExpandedMenus(prev => ({ ...prev, [item.name]: !prev[item.name] }))}
+                                            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition w-full text-left text-slate-300 hover:bg-slate-800 hover:text-white"
+                                        >
+                                            <Icon size={18} />
+                                            {item.name}
+                                            {isExpanded ? <ChevronDown size={16} className="ml-auto" /> : <ChevronRight size={16} className="ml-auto" />}
+                                        </button>
+
+                                        {isExpanded && (
+                                            <div className="ml-6 mt-1 space-y-1">
+                                                {item.submenu.map((subItem) => {
+                                                    if (!can(user, subItem.permission)) return null;
+
+                                                    return (
+                                                        <NavLink
+                                                            key={subItem.name}
+                                                            to={subItem.path}
+                                                            onClick={handleNavClick}
+                                                            className={({ isActive }) =>
+                                                                `flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition
+                                                                ${
+                                                                    isActive
+                                                                        ? "bg-slate-700 text-white"
+                                                                        : "text-slate-400 hover:bg-slate-700 hover:text-slate-200"
+                                                                }`
+                                                            }
+                                                        >
+                                                            {subItem.name}
+                                                        </NavLink>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <NavLink
+                                        to={item.path}
+                                        onClick={handleNavClick}
+                                        className={({ isActive }) =>
+                                            `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition
+                                            ${
+                                                isActive
+                                                    ? "bg-slate-800 text-white"
+                                                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                                            }`
+                                        }
+                                    >
+                                        <Icon size={18} />
+                                        {item.name}
+                                    </NavLink>
+                                )}
                             </div>
                         );
                     })}

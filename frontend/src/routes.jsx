@@ -8,8 +8,12 @@ import Records from "./pages/records/Records";
 import Record from "./pages/records/Record";
 import Roles from "./pages/roles/Roles";
 import Users from "./pages/users/Users";
+import Departments from "./pages/departments/Departments";
+import DocumentSettings from "./pages/document-settings/DocumentSettings";
 import Unauthorized from "./pages/Unauthorized";
 import ChangePassword from "./pages/ChangePassword";
+import ServiceRecords from "./pages/records/ServiceRecords/ServiceRecords";
+import ServiceRecord from "./pages/records/ServiceRecords/ServiceRecord";
 
 const router = createBrowserRouter([
     {
@@ -33,7 +37,7 @@ const router = createBrowserRouter([
                 element: <Dashboard />,
             },
             {
-                path: "records",
+                path: "records/personal",
                 element: (
                     <ProtectedRoute requiredPermissions={['view_records']}>
                         <Records />
@@ -41,10 +45,26 @@ const router = createBrowserRouter([
                 ),
             },
             {
-                path: "records/:id",
+                path: "records/service",
+                element: (
+                    <ProtectedRoute requiredPermissions={['view_records']}>
+                        <ServiceRecords />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "records/personal/:id",
                 element: (
                     <ProtectedRoute requiredPermissions={['view_records']}>
                         <Record />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "records/service/:id",
+                element: (
+                    <ProtectedRoute requiredPermissions={['view_records']}>
+                        <ServiceRecord />
                     </ProtectedRoute>
                 ),
             },
@@ -61,6 +81,22 @@ const router = createBrowserRouter([
                 element: (
                     <ProtectedRoute requiredPermissions={['manage_users']}>
                         <Users />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "departments",
+                element: (
+                    <ProtectedRoute requiredPermissions={['manage_departments']}>
+                        <Departments />
+                    </ProtectedRoute>
+                ),
+            },
+            {
+                path: "document_settings",
+                element: (
+                    <ProtectedRoute requiredPermissions={['manage_document_settings']}>
+                        <DocumentSettings />
                     </ProtectedRoute>
                 ),
             },

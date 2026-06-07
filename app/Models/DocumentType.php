@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class DocumentType extends Model
 {
-    protected $filable = ['category_id', 'name'];
+    protected $fillable = ['category_id', 'name'];
 
     public function category() {
-        return $this->belongsTo(DocumentCategory::class);
+        return $this->belongsTo(DocumentCategory::class, 'category_id', 'id');
     }
 
     public function documents() {

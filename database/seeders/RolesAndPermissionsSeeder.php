@@ -20,6 +20,8 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $permissions = [
             'manage_users',
+            'manage_document_settings',
+            'manage_departments',
             'manage_classified_records',
             'manage_roles',
             'create_user',

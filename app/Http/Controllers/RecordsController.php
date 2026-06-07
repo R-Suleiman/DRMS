@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AllRecords;
 use App\Models\Document;
 use App\Models\DocumentCategory;
 use App\Models\DocumentType;
 use App\Models\DocumentVolume;
 use App\Models\Record;
 use App\Models\RecordMetadata;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -26,22 +28,27 @@ class RecordsController extends Controller
         $columnFilters = $request->all();
         unset($columnFilters['per_page'], $columnFilters['page'], $columnFilters['sort_by'], $columnFilters['sort_order'], $columnFilters['search']);
 
-        $RecordsQuery = Record::query();
+        $RecordsQuery = AllRecords::with('personalRecords');
 
         if (!optional(Auth::user())->can('manage_classified_records')) {
-            $RecordsQuery->where('is_classified', false);
+            $RecordsQuery->whereHas('personalRecords', function ($query) {
+                $query->where('is_classified', false);
+            });
         }
 
         $RecordsQuery
             ->where(function ($query) use ($search) {
                 if (!empty($search)) {
-                    $query->where('first_name', 'like', "%$search%")
-                        ->orWhere('middle_name', 'like', "%$search%")
-                        ->orWhere('last_name', 'like', "%$search%")
-                        ->orWhere('phone', 'like', "%$search%")
-                        ->orWhere('gender', 'like', "%$search%")
-                        ->orWhere('email', 'like', "%$search%")
-                        ->orWhere('nida', 'like', "%$search%");
+                    $query->where('record_number', 'like', "%$search%")
+                        ->orWhereHas('personalRecords', function ($query) use ($search) {
+                            $query->where('first_name', 'like', "%$search%")
+                                ->orWhere('middle_name', 'like', "%$search%")
+                                ->orWhere('last_name', 'like', "%$search%")
+                                ->orWhere('phone', 'like', "%$search%")
+                                ->orWhere('gender', 'like', "%$search%")
+                                ->orWhere('email', 'like', "%$search%")
+                                ->orWhere('nida', 'like', "%$search%");
+                        });
                 }
             });
 
@@ -49,7 +56,13 @@ class RecordsController extends Controller
             if ($value === '' || $value === null) {
                 continue;
             }
-            $RecordsQuery->where("records.$column", 'like', "%$value%");
+            if ($column === 'record_number') {
+                $RecordsQuery->where('record_number', 'like', "%$value%");
+                continue;
+            }
+            $RecordsQuery->whereHas('personalRecords', function ($query) use ($column, $value) {
+                $query->where("records.$column", 'like', "%$value%");
+            });
         }
 
         $records = $RecordsQuery->orderBy($sortBy, $sortDirection)->paginate($perPage);
@@ -59,7 +72,7 @@ class RecordsController extends Controller
 
     public function record($id)
     {
-        $record = Record::with('metadata', 'documents.category', 'documents.type', 'documents.volume')->where('id', $id)->first();
+        $record = AllRecords::with('personalRecords', 'metadata', 'documents.category', 'documents.type', 'documents.volume')->where('id', $id)->first();
 
         if (!$record) {
             return response()->json(['success' => false, 'message' => 'Record not found!'], 404);
@@ -72,7 +85,7 @@ class RecordsController extends Controller
     {
         $validated = $request->validate([
             'first_name'  => 'required|string|min:3',
-            'middle_name' => 'nullable|string|min:3',
+            'middle_name' => 'nullable|string',
             'last_name'   => 'required|string|min:3',
             'gender'      => 'required|in:M,F',
             'dob'         => 'required|date',
@@ -94,48 +107,67 @@ class RecordsController extends Controller
             'is_classified' => 'nullable|boolean',
         ]);
 
-        $record = Record::create([
-            'first_name'  => $validated['first_name'],
-            'middle_name' => $validated['middle_name'] ?? null,
-            'last_name'   => $validated['last_name'],
-            'gender'      => $validated['gender'],
-            'dob'         => $validated['dob'],
-            'phone'       => $validated['phone'],
-            'email'       => $validated['email'] ?? null,
-            'nida'        => $validated['nida'] ?? null,
-            'is_classified' => $validated['is_classified'] ?? false,
-        ]);
-
-        if ($request->hasFile('photo')) {
-            $file = $request->file('photo');
-            $uuid = Str::uuid();
-
-            $path = $file->storeAs(
-                "documents/persons/{$record->id}/profile_photo",
-                "{$uuid}." . $file->getClientOriginalExtension(),
-                'private'
-            );
-
-            $record->update([
-                'photo' => $path,
-            ]);
+        foreach (['middle_name', 'email', 'nida', 'metadata'] as $field) {
+            if (array_key_exists($field, $validated) && $validated[$field] === '') {
+                $validated[$field] = null;
+            }
         }
 
-        if (!empty($validated['metadata'])) {
-            $metadata = json_decode($validated['metadata'], true);
+        try {
+            $allRecordId = DB::transaction(function () use ($validated, $request) {
+                $allRecord = AllRecords::create([
+                    'record_number' => $this->generatePersonalRecordNumber(),
+                    'record_type' => 'personal'
+                ]);
 
-            foreach ($metadata as $key => $value) {
-                RecordMetadata::create([
-                    'record_id' => $record->id,
-                    'meta_key'  => $key,
-                    'meta_value' => is_array($value) ? json_encode($value) : $value,
+                $record = $allRecord->personalRecords()->create([
+                'first_name'  => $validated['first_name'],
+                'middle_name' => $validated['middle_name'] ?? null,
+                'last_name'   => $validated['last_name'],
+                'gender'      => $validated['gender'],
+                'dob'         => $validated['dob'],
+                'phone'       => $validated['phone'],
+                'email'       => $validated['email'] ?? null,
+                'nida'        => $validated['nida'] ?? null,
+                'is_classified' => $validated['is_classified'] ?? false,
+            ]);
+
+            if ($request->hasFile('photo')) {
+                $file = $request->file('photo');
+                $uuid = Str::uuid();
+
+                $path = $file->storeAs(
+                    "documents/persons/{$allRecord->id}/profile_photo",
+                    "{$uuid}." . $file->getClientOriginalExtension(),
+                    'private'
+                );
+
+                $record->update([
+                    'photo' => $path,
                 ]);
             }
+
+            if (!empty($validated['metadata'])) {
+                $metadata = json_decode($validated['metadata'], true);
+
+                foreach ($metadata as $key => $value) {
+                    RecordMetadata::create([
+                        'record_id' => $allRecord->id,
+                        'meta_key'  => $key,
+                        'meta_value' => is_array($value) ? json_encode($value) : $value,
+                    ]);
+                }
+            }
+
+                return $allRecord->id;
+            });
+        } catch (\Throwable $e) {
+            throw $e;
         }
 
         return response()->json([
             'success'  => true,
-            'recordId' => $record->id,
+            'recordId' => $allRecordId,
             'message' => 'Record Profile created successfully'
         ], 201);
     }
@@ -189,66 +221,79 @@ class RecordsController extends Controller
             ]
         );
 
-        $existingRecord = Record::where('id', $id)->first();
-
-        $existingRecord->update([
-            'first_name'  => $validated['first_name'],
-            'middle_name' => $validated['middle_name'] ?? null,
-            'last_name'   => $validated['last_name'],
-            'gender'      => $validated['gender'],
-            'dob'         => $validated['dob'],
-            'phone'       => $validated['phone'],
-            'email'       => $validated['email'] ?? null,
-            'nida'        => $validated['nida'] ?? null,
-            'is_classified' => $validated['is_classified'] ?? false,
-        ]);
-
-        $path = $existingRecord->photo;
-        if ($request->hasFile('photo')) {
-            // delete the existing photo fron storage
-            Storage::delete($path);
-
-            // create new
-            $file = $request->file('photo');
-            $uuid = Str::uuid();
-
-            $path = $file->storeAs(
-                "documents/persons/{$existingRecord->id}/profile_photo",
-                "{$uuid}." . $file->getClientOriginalExtension(),
-                'private'
-            );
+        foreach (['middle_name', 'email', 'nida', 'metadata'] as $field) {
+            if (array_key_exists($field, $validated) && $validated[$field] === '') {
+                $validated[$field] = null;
+            }
         }
 
-        $existingRecord->update([
-            'photo' => $path,
-        ]);
+        try {
+            DB::transaction(function () use ($id, $validated, $request) {
+                $allRecord = AllRecords::findOrFail($id);
+                $existingRecord = $allRecord->personalRecords()->first();
 
-        if (!empty($validated['metadata'])) {
-            $metadata = json_decode($validated['metadata'], true);
+                if (!$existingRecord) {
+                    throw new \Exception('Personal record not found for update');
+                }
 
-            foreach ($metadata as $key => $value) {
-                RecordMetadata::updateOrCreate(
-                    [
-                        'record_id' => $existingRecord->id,
-                        'meta_key'  => $key,
-                    ],
-                    ['meta_value' => is_array($value) ? json_encode($value) : $value,]
-                );
-            }
+                $path = $existingRecord->photo;
+                if ($request->hasFile('photo')) {
+                    if ($path && Storage::disk('private')->exists($path)) {
+                        Storage::disk('private')->delete($path);
+                    }
+
+                    $file = $request->file('photo');
+                    $uuid = Str::uuid();
+
+                    $path = $file->storeAs(
+                        "documents/persons/{$id}/profile_photo",
+                        "{$uuid}." . $file->getClientOriginalExtension(),
+                        'private'
+                    );
+                }
+
+                $existingRecord->update([
+                    'first_name'  => $validated['first_name'],
+                    'middle_name' => $validated['middle_name'] ?? null,
+                    'last_name'   => $validated['last_name'],
+                    'gender'      => $validated['gender'],
+                    'dob'         => $validated['dob'],
+                    'phone'       => $validated['phone'],
+                    'email'       => $validated['email'] ?? null,
+                    'nida'        => $validated['nida'] ?? null,
+                    'is_classified' => $validated['is_classified'] ?? false,
+                    'photo'       => $path,
+                ]);
+
+                if (!empty($validated['metadata'])) {
+                    $metadata = json_decode($validated['metadata'], true);
+
+                    foreach ($metadata as $key => $value) {
+                        RecordMetadata::updateOrCreate(
+                            [
+                                'record_id' => $id,
+                                'meta_key'  => $key,
+                            ],
+                            ['meta_value' => is_array($value) ? json_encode($value) : $value,]
+                        );
+                    }
+                }
+            });
+        } catch (\Throwable $e) {
+            throw $e;
         }
 
         return response()->json([
             'success'  => true,
             'message' => 'Record Profile updated successfully',
-            'recordId' => $existingRecord->id,
+            'recordId' => $id,
         ], 201);
     }
 
     public function deleteRecord($id)
     {
-        $record = Record::findOrFail($id);
-
-        $record->delete();
+        $allRecord = AllRecords::findOrFail($id);
+        $allRecord->delete();
 
         return response()->json(['success' => true, 'message' => 'Record deleted successfully']);
     }
@@ -280,10 +325,12 @@ class RecordsController extends Controller
             'category' => 'required|string',
             'volume' => 'required|string',
             'type' => 'required|string',
-            'file' => 'required|file|max:10240', // 10MB
+            'nature' => 'required|string',
+            'file' => 'required|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png', // 10MB
         ]);
 
-        $person = Record::findOrFail($id);
+        AllRecords::findOrFail($id);
+
         $file = $request->file('file');
         $uuid = Str::uuid();
         $categoryName = DocumentCategory::where('id', $request->category)->first()->category_name;
@@ -291,15 +338,16 @@ class RecordsController extends Controller
         $volumeName2 = Str::replace(' ', '_', $volumeName);
 
         $path = $file->storeAs(
-            "documents/persons/{$person->id}/{$volumeName2}/{$categoryName}",
+            "documents/{$request->nature}/{$id}/{$volumeName2}/{$categoryName}",
             "{$uuid}." . $file->getClientOriginalExtension()
         );
 
         $document = Document::create([
-            'record_id' => $person->id,
+            'record_id' => $id,
             'volume_id' => $request->volume,
             'category' => $request->category,
             'name' => $request->type,
+            'nature' => $request->nature,
             'file_path' => $path,
             'size' => $file->getSize(),
             'mime_type' => $file->getClientOriginalExtension(),

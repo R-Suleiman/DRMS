@@ -1,4 +1,3 @@
-
 <?php
 
 return [
@@ -25,7 +24,13 @@ return [
     |--------------------------------------------------------------------------
     | Replace * with your actual frontend domain(s).
     */
+
     'allowed_origins' => ['*'],
+
+    //  'allowed_origins' => [
+    //      'https://drms.seswarenexus.com',
+    // 'https://www.drms.seswarenexus.com',
+    //     ],
 
     'allowed_origins_patterns' => [],
 
